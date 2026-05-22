@@ -20,3 +20,6 @@ htmlcov/
 
 # Logs
 *.log
+
+# SQLite DB
+*.db
