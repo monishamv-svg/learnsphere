@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from app.core.config import settings
 from app.db.database import Base, engine
-
 import app.models
+from app.api import auth
 
 Base.metadata.create_all(bind=engine)  ##Create all tables in the database/ models
 
@@ -12,6 +12,7 @@ app = FastAPI(                                    ##FastAPI instance/ object
     version="1.0.0"
 )
 
+app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 
 @app.get("/")     ##This is a route/endpoint. declares the URL path for the endpoint.
 def root():
