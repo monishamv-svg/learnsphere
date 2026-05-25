@@ -11,6 +11,11 @@ class StudentCreate(BaseModel):
 
     email: EmailStr
 
+    password: str = Field(
+        min_length=6,
+        max_length=100
+    )
+
     student_code: str = Field(
         min_length=4,
         max_length=20
@@ -67,6 +72,18 @@ class StudentRead(BaseModel):
     department: str
     semester: int
     phone_number: Optional[str]
+
+    @classmethod
+    def from_student(cls, student):
+        return cls(
+            id=student.id,
+            full_name=student.user.full_name,
+            email=student.user.email,
+            student_code=student.student_code,
+            department=student.department,
+            semester=student.semester,
+            phone_number=student.phone_number,
+        )
 
     class Config:
         from_attributes = True

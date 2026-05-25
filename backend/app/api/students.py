@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from fastapi import Query
 
 from app.db.session import get_db
 from app.schemas.student import StudentCreate, StudentRead
+from app.schemas.pagination import StudentPagination
 from app.services.student_service import (
     create_student,
     get_all_students,
@@ -23,12 +25,36 @@ def create_student_api(
     return create_student(db, student)
 
 
-@router.get("/", response_model=List[StudentRead])
+"""@router.get("/", response_model=List[StudentRead])
 def get_students_api(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_admin) 
 ):
-    return get_all_students(db)
+    return get_all_students(db)"""
+
+@router.get("/", response_model=StudentPagination)
+def get_students_api(
+    skip: int = Query(
+        default=0,
+        ge=0
+    ),
+
+    limit: int = Query(
+        default=10,
+        ge=1,
+        le=100
+    ),
+
+    search: str = None,
+
+    db: Session = Depends(get_db)
+):
+    return get_all_students(
+        db,
+        skip,
+        limit,
+        search
+    )
 
 
 @router.get("/{student_id}", response_model=StudentRead)
@@ -42,4 +68,4 @@ def get_student_api(
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
 
-    return student
+    return StudentRead.from_student(student)
