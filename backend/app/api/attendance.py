@@ -7,17 +7,10 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
-from app.core.security import require_admin
+from app.core.security import (require_admin, get_current_user)
 from app.db.session import get_db
-from app.schemas.attendance import (
-    AttendanceCreate,
-    AttendanceRead
-)
-from app.services.attendance_service import (
-    mark_attendance,
-    get_all_attendance,
-    calculate_attendance_percentage
-)
+from app.schemas.attendance import (AttendanceCreate, AttendanceRead)
+from app.services.attendance_service import (mark_attendance, get_all_attendance, calculate_attendance_percentage)
 
 router = APIRouter()
 

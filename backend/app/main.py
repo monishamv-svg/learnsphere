@@ -10,6 +10,7 @@ from app.api import enrollments
 from app.api import timetables
 from app.api import attendance
 from app.api import dashboard
+from app.api import users
 
 Base.metadata.create_all(bind=engine)  ##Create all tables in the database/ models
 
@@ -60,6 +61,9 @@ app.include_router(
     prefix="/dashboard",
     tags=["Dashboard"]
 )
+
+app.include_router(users.router)
+
 @app.get("/")     ##This is a route/endpoint. declares the URL path for the endpoint.
 def root():
     return {

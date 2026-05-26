@@ -5,12 +5,20 @@ from fastapi import Query
 from app.db.session import get_db
 from app.schemas.student import StudentCreate, StudentRead
 from app.schemas.pagination import StudentPagination
+from app.schemas.student import (
+    StudentCreate,
+    StudentRead,
+    StudentUpdate
+)
 from app.services.student_service import (
     create_student,
     get_all_students,
-    get_student_by_id
+    get_student_by_id,
+    update_student,
+    delete_student
 )
-from app.core.security import require_admin
+
+from app.core.security import (require_admin, get_current_user)
 from typing import List
 
 router = APIRouter()
@@ -24,13 +32,6 @@ def create_student_api(
 ):
     return create_student(db, student)
 
-
-"""@router.get("/", response_model=List[StudentRead])
-def get_students_api(
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin) 
-):
-    return get_all_students(db)"""
 
 @router.get("/", response_model=StudentPagination)
 def get_students_api(
@@ -69,3 +70,45 @@ def get_student_api(
         raise HTTPException(status_code=404, detail="Student not found")
 
     return StudentRead.from_student(student)
+
+@router.patch(
+    "/{student_id}",
+    response_model=StudentRead
+)
+def update_student_api(
+    student_id: int,
+    student_data: StudentUpdate,
+    db: Session = Depends(get_db)
+):
+    updated_student = update_student(
+        db,
+        student_id,
+        student_data
+    )
+
+    if not updated_student:
+        raise HTTPException(
+            status_code=404,
+            detail="Student not found"
+        )
+
+    return updated_student
+
+@router.delete("/{student_id}")
+def delete_student_api(
+    student_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
+):
+    deleted_student = delete_student(
+        db,
+        student_id
+    )
+
+    if not deleted_student:
+        raise HTTPException(
+            status_code=404,
+            detail="Student not found"
+        )
+
+    return deleted_student

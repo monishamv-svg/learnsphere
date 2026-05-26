@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.models.course import Course
 from app.schemas.course import CourseCreate
-
+from app.schemas.course import CourseUpdate
 
 def create_course(db: Session, course: CourseCreate):
     db_course = Course(**course.model_dump())
@@ -22,3 +22,46 @@ def get_all_courses(db: Session):
 
 def get_course_by_id(db: Session, course_id: int):
     return db.query(Course).filter(Course.id == course_id).first()
+
+def update_course(
+    db: Session,
+    course_id: int,
+    course_data: CourseUpdate
+):
+    course = db.query(Course).filter(
+        Course.id == course_id
+    ).first()
+
+    if not course:
+        return None
+
+    update_data = course_data.model_dump(
+        exclude_unset=True
+    )
+
+    for key, value in update_data.items():
+        setattr(course, key, value)
+
+    db.commit()
+    db.refresh(course)
+
+    return course
+
+
+def delete_course(
+    db: Session,
+    course_id: int
+):
+    course = db.query(Course).filter(
+        Course.id == course_id
+    ).first()
+
+    if not course:
+        return None
+
+    db.delete(course)
+    db.commit()
+
+    return {
+        "message": "Course deleted successfully"
+    }

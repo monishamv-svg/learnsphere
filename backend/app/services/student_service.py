@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.models.student import Student
 from app.models.user import User
 from app.schemas.student import StudentCreate, StudentRead
+from app.schemas.student import StudentUpdate
 from app.services.user_service import get_user_by_email
 from app.utils.security import hash_password
 
@@ -67,3 +68,46 @@ def get_student_by_id(db: Session, student_id: int):
         .filter(Student.id == student_id)
         .first()
     )
+
+def update_student(
+    db: Session,
+    student_id: int,
+    student_data: StudentUpdate
+):
+    student = db.query(Student).filter(
+        Student.id == student_id
+    ).first()
+
+    if not student:
+        return None
+
+    update_data = student_data.model_dump(
+        exclude_unset=True  ##Without this: missing fields become null. With this: only sent fields updated
+    )
+
+    for key, value in update_data.items():
+        setattr(student, key, value)  ##Dynamic field updating
+
+    db.commit()
+    db.refresh(student)
+
+    return student
+
+
+def delete_student(
+    db: Session,
+    student_id: int
+):
+    student = db.query(Student).filter(
+        Student.id == student_id
+    ).first()
+
+    if not student:
+        return None
+
+    db.delete(student)
+    db.commit()
+
+    return {
+        "message": "Student deleted successfully"
+    }

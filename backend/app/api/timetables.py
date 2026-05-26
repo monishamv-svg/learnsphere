@@ -3,16 +3,10 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.core.security import require_admin
+from app.core.security import (require_admin, get_current_user)
 from app.db.session import get_db
-from app.schemas.timetable import (
-    TimetableCreate,
-    TimetableRead
-)
-from app.services.timetable_service import (
-    create_timetable_entry,
-    get_all_timetable_entries
-)
+from app.schemas.timetable import (TimetableCreate, TimetableRead)
+from app.services.timetable_service import (create_timetable_entry, get_all_timetable_entries)
 
 router = APIRouter()
 

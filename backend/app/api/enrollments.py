@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.core.security import require_admin
+from app.core.security import (require_admin, get_current_user)
 from app.db.session import get_db
 from app.schemas.enrollment import EnrollmentCreate, EnrollmentRead
 from app.services.enrollment_service import (
