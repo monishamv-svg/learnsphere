@@ -2,7 +2,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.models.attendance import Attendance
-from app.schemas.attendance import AttendanceCreate
+from app.schemas.attendance import (
+    AttendanceCreate,
+    AttendanceUpdate,
+    AttendancePut
+)
 
 
 def mark_attendance(
@@ -34,9 +38,14 @@ def mark_attendance(
 
 
 def get_all_attendance(
-    db: Session
+    db: Session,
+    skip: int = 0,
+    limit: int = 10
 ):
-    return db.query(Attendance).all()
+    return db.query(Attendance)\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
 
 
 def calculate_attendance_percentage(
@@ -60,3 +69,71 @@ def calculate_attendance_percentage(
     ) * 100
 
     return round(percentage, 2)
+
+
+def update_attendance(
+    db: Session,
+    attendance_id: int,
+    attendance_data: AttendanceUpdate
+):
+    attendance = db.query(Attendance).filter(
+        Attendance.id == attendance_id
+    ).first()
+
+    if not attendance:
+        return None
+
+    update_data = attendance_data.model_dump(
+        exclude_unset=True
+    )
+
+    for key, value in update_data.items():
+        setattr(attendance, key, value)
+
+    db.commit()
+    db.refresh(attendance)
+
+    return attendance
+
+
+def replace_attendance(
+    db: Session,
+    attendance_id: int,
+    attendance_data: AttendancePut
+):
+    attendance = db.query(Attendance).filter(
+        Attendance.id == attendance_id
+    ).first()
+
+    if not attendance:
+        return None
+
+    attendance.student_id = attendance_data.student_id
+    attendance.timetable_id = attendance_data.timetable_id
+    attendance.attendance_date = attendance_data.attendance_date
+    attendance.status = attendance_data.status
+
+    db.commit()
+    db.refresh(attendance)
+
+    return attendance
+
+
+def delete_attendance(
+    db: Session,
+    attendance_id: int
+):
+    attendance = db.query(Attendance).filter(
+        Attendance.id == attendance_id
+    ).first()
+
+    if not attendance:
+        return None
+
+    db.delete(attendance)
+
+    db.commit()
+
+    return {
+        "message": "Attendance deleted successfully"
+    }

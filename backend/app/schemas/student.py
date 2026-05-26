@@ -63,6 +63,27 @@ class StudentUpdate(BaseModel):
         max_length=15
     )
 
+class StudentPut(BaseModel):
+    full_name: str = Field(
+        min_length=2,
+        max_length=100
+    )
+
+    department: str = Field(
+        min_length=2,
+        max_length=100
+    )
+
+    semester: int = Field(
+        ge=1,
+        le=8
+    )
+
+    phone_number: Optional[str] = Field(
+        default=None,
+        min_length=10,
+        max_length=15
+    )
 
 class StudentRead(BaseModel):
     id: int

@@ -3,8 +3,12 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models.student import Student
 from app.models.user import User
-from app.schemas.student import StudentCreate, StudentRead
-from app.schemas.student import StudentUpdate
+from app.schemas.student import (
+    StudentCreate,
+    StudentRead,
+    StudentUpdate,
+    StudentPut
+)
 from app.services.user_service import get_user_by_email
 from app.utils.security import hash_password
 
@@ -82,16 +86,42 @@ def update_student(
         return None
 
     update_data = student_data.model_dump(
-        exclude_unset=True  ##Without this: missing fields become null. With this: only sent fields updated
+        exclude_unset=True
     )
 
+    if "full_name" in update_data:
+        student.user.full_name = update_data.pop("full_name")
+
     for key, value in update_data.items():
-        setattr(student, key, value)  ##Dynamic field updating
+        setattr(student, key, value)
 
     db.commit()
     db.refresh(student)
 
-    return student
+    return StudentRead.from_student(student)
+
+
+def replace_student(
+    db: Session,
+    student_id: int,
+    student_data: StudentPut
+):
+    student = db.query(Student).filter(
+        Student.id == student_id
+    ).first()
+
+    if not student:
+        return None
+
+    student.user.full_name = student_data.full_name
+    student.department = student_data.department
+    student.semester = student_data.semester
+    student.phone_number = student_data.phone_number
+
+    db.commit()
+    db.refresh(student)
+
+    return StudentRead.from_student(student)
 
 
 def delete_student(
@@ -105,7 +135,13 @@ def delete_student(
     if not student:
         return None
 
+    user = student.user
+
     db.delete(student)
+
+    if user:
+        db.delete(user)
+
     db.commit()
 
     return {

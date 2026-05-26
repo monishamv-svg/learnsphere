@@ -43,6 +43,27 @@ class CourseUpdate(BaseModel):
         le=6
     )
 
+class CoursePut(BaseModel):
+    course_code: str = Field(
+        min_length=3,
+        max_length=20
+    )
+
+    title: str = Field(
+        min_length=3,
+        max_length=200
+    )
+
+    description: Optional[str] = Field(
+        default=None,
+        max_length=1000
+    )
+
+    credits: int = Field(
+        ge=1,
+        le=6
+    )
+
 
 class CourseRead(BaseModel):
     id: int

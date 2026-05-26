@@ -8,16 +8,17 @@ from app.schemas.pagination import StudentPagination
 from app.schemas.student import (
     StudentCreate,
     StudentRead,
-    StudentUpdate
+    StudentUpdate,
+    StudentPut
 )
 from app.services.student_service import (
     create_student,
     get_all_students,
     get_student_by_id,
     update_student,
+    replace_student,
     delete_student
 )
-
 from app.core.security import (require_admin, get_current_user)
 from typing import List
 
@@ -62,12 +63,24 @@ def get_students_api(
 def get_student_api(
     student_id: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(require_admin)
+    current_user = Depends(get_current_user)
 ):
     student = get_student_by_id(db, student_id)
 
     if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Student not found"
+        )
+
+    if (
+        current_user.role != "admin"
+        and student.user_id != current_user.id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized"
+        )
 
     return StudentRead.from_student(student)
 
@@ -78,9 +91,48 @@ def get_student_api(
 def update_student_api(
     student_id: int,
     student_data: StudentUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
+    student = get_student_by_id(
+        db,
+        student_id
+    )
+
+    if not student:
+        raise HTTPException(
+            status_code=404,
+            detail="Student not found"
+        )
+
+    if (
+        current_user.role != "admin"
+        and student.user_id != current_user.id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized"
+        )
+
     updated_student = update_student(
+        db,
+        student_id,
+        student_data
+    )
+
+    return updated_student
+
+@router.put(
+    "/{student_id}",
+    response_model=StudentRead
+)
+def replace_student_api(
+    student_id: int,
+    student_data: StudentPut,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
+):
+    updated_student = replace_student(
         db,
         student_id,
         student_data
