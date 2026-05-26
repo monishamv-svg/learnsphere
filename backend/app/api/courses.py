@@ -19,6 +19,7 @@ from app.services.course_service import (
     replace_course,
     delete_course
 )
+from app.schemas.common import StandardResponse
 
 router = APIRouter()
 
@@ -52,17 +53,30 @@ def get_courses_api(
     )
 
 
-@router.get("/{course_id}", response_model=CourseRead)
+@router.get(
+    "/{course_id}",
+    response_model=StandardResponse[CourseRead]
+)
 def get_course_api(
     course_id: int,
     db: Session = Depends(get_db)
 ):
-    course = get_course_by_id(db, course_id)
+    course = get_course_by_id(
+        db,
+        course_id
+    )
 
     if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Course not found"
+        )
 
-    return course
+    return StandardResponse[CourseRead](
+        success=True,
+        message="Course fetched successfully",
+        data=CourseRead.model_validate(course)
+    )
 
 
 @router.put(

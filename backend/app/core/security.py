@@ -4,22 +4,13 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.db.session import SessionLocal
+from app.db.session import get_db
 from app.models.user import User
 
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/auth/token"
 )
-
-
-def get_db():
-    db = SessionLocal()
-
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def get_current_user(
@@ -31,7 +22,7 @@ def get_current_user(
         detail="Could not validate credentials",
         headers={
             "WWW-Authenticate": "Bearer"
-        },
+        }
     )
 
     try:

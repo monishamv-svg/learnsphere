@@ -1,17 +1,34 @@
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
 
 load_dotenv()
 
-
 class Settings:
-    APP_NAME = os.getenv("APP_NAME")
-    APP_ENV = os.getenv("APP_ENV")
 
-    SECRET_KEY = os.getenv("SECRET_KEY")
-    ALGORITHM = os.getenv("ALGORITHM")
+    APP_NAME: str = os.getenv(
+        "APP_NAME",
+        "LearnSphere"
+    )
 
-    DATABASE_URL = os.getenv("DATABASE_URL")
+    APP_ENV: str = os.getenv(
+        "APP_ENV",
+        "development"
+    )
 
+    SECRET_KEY: str = os.getenv(
+        "SECRET_KEY",
+        "supersecretkey"
+    )
+
+    ALGORITHM: str = os.getenv(
+        "ALGORITHM",
+        "HS256"
+    )
+
+    DATABASE_URL: str = os.getenv(
+        "DATABASE_URL",
+        "sqlite:///./learnsphere.db"
+    )
 
 settings = Settings()
