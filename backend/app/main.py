@@ -23,7 +23,7 @@ from app.exceptions.handlers import (
     generic_exception_handler
 )
 
-Base.metadata.create_all(bind=engine)
+##Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.APP_NAME,
