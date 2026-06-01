@@ -1,24 +1,56 @@
-import { useEffect } from "react"
-import api from "./api/axios"
+import {
+  BrowserRouter,
+  Routes,
+  Route
+} from "react-router-dom"
+
+import { AuthProvider } from "./context/AuthProvider"
+
+import LoginPage from "./pages/auth/LoginPage"
+
+import AdminDashboard from "./pages/admin/AdminDashboard"
+
+import StudentDashboard from "./pages/student/StudentDashboard"
+
+import ProtectedRoute from "./routes/ProtectedRoute"
 
 function App() {
 
-  useEffect(() => {
-    api.get("/")
-      .then((response) => {
-        console.log(response.data)
-      })
-      .catch((error) => {
-        console.error(error)
-      })
-  }, [])
-
   return (
-    <div className="p-10">
-      <h1 className="text-4xl font-bold text-blue-600">
-        LearnSphere Frontend
-      </h1>
-    </div>
+    <AuthProvider>
+
+      <BrowserRouter>
+
+        <Routes>
+
+          <Route
+            path="/"
+            element={<LoginPage />}
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute role="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/student"
+            element={
+              <ProtectedRoute role="student">
+                <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+        </Routes>
+
+      </BrowserRouter>
+
+    </AuthProvider>
   )
 }
 

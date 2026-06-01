@@ -10,6 +10,12 @@ from app.utils.security import hash_password
 
 db = SessionLocal()
 
+SEED_CREDENTIALS = {
+    "admin@learnsphere.com": "Admin123",
+    "rahul@example.com": "student123",
+    "priya@example.com": "student123",
+}
+
 # CREATE ADMIN
 existing_admin = db.query(User).filter(
     User.email == "admin@learnsphere.com"
@@ -117,6 +123,13 @@ for student_data in students_data:
 
     print(f"Student created: {student_data['full_name']}")
 
+
+# Keep seeded account passwords in sync when re-running the script
+for email, password in SEED_CREDENTIALS.items():
+    user = db.query(User).filter(User.email == email).first()
+    if user:
+        user.password_hash = hash_password(password)
+        print(f"Password synced for: {email}")
 
 # SAVE CHANGES
 db.commit()
