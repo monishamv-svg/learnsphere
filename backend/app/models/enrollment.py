@@ -13,6 +13,14 @@ class Enrollment(Base):
 
     course_id = Column(Integer, ForeignKey("courses.id"))
 
+    timetable_id = Column(
+        Integer,
+        ForeignKey("timetables.id"),
+        nullable=True
+    )
+
     student = relationship("Student", back_populates="enrollments")
 
     course = relationship("Course", back_populates="enrollments")
+
+    timetable = relationship("Timetable")

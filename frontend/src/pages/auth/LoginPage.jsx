@@ -2,6 +2,8 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 
 import { useAuth } from "../../context/useAuth"
+import Button from "../../components/common/Button"
+import Input from "../../components/common/Input"
 
 function LoginPage() {
 
@@ -46,7 +48,11 @@ function LoginPage() {
       flex
       items-center
       justify-center
-      bg-gray-100
+      bg-linear-to-br
+      from-slate-900
+      via-blue-900
+      to-slate-800
+      p-4
     ">
 
       <form
@@ -54,77 +60,74 @@ function LoginPage() {
         className="
           bg-white
           p-8
-          rounded-xl
-          shadow-lg
+          rounded-2xl
+          shadow-2xl
           w-full
           max-w-md
+          border
+          border-gray-100
         "
       >
 
-        <h1 className="
-          text-3xl
-          font-bold
-          mb-6
-          text-center
-          text-blue-600
-        ">
-          LearnSphere Login
-        </h1>
+        <div className="text-center mb-8">
+          <h1 className="
+            text-3xl
+            font-bold
+            text-blue-600
+          ">
+            LearnSphere
+          </h1>
+          <p className="text-gray-500 mt-2">
+            Sign in to your account
+          </p>
+        </div>
 
         {error && (
           <p className="
-            text-red-500
+            text-red-600
+            bg-red-50
+            border
+            border-red-100
+            rounded-lg
+            p-3
             mb-4
+            text-sm
           ">
             {error}
           </p>
         )}
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) =>
-            setEmail(e.target.value)
-          }
-          className="
-            w-full
-            border
-            p-3
-            rounded-lg
-            mb-4
-          "
-        />
+        <div className="space-y-4">
+          <Input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
+          />
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) =>
-            setPassword(e.target.value)
-          }
-          className="
-            w-full
-            border
-            p-3
-            rounded-lg
-            mb-6
-          "
-        />
+          <Input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
+          />
+        </div>
 
-        <button
+        <Button
           type="submit"
           className="
             w-full
+            mt-6
             bg-blue-600
-            text-white
             py-3
-            rounded-lg
-            hover:bg-blue-700
           "
         >
           Login
-        </button>
+        </Button>
 
       </form>
     </div>

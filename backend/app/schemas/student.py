@@ -1,6 +1,11 @@
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+from app.utils.phone import (
+    PHONE_VALIDATION_MESSAGE,
+    is_valid_indian_mobile_phone,
+)
 
 
 class StudentCreate(BaseModel):
@@ -31,11 +36,20 @@ class StudentCreate(BaseModel):
         le=8
     )
 
-    phone_number: Optional[str] = Field(
-        default=None,
+    phone_number: str = Field(
         min_length=10,
-        max_length=15
+        max_length=10
     )
+
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, value: str):
+        cleaned = value.strip()
+
+        if not is_valid_indian_mobile_phone(cleaned):
+            raise ValueError(PHONE_VALIDATION_MESSAGE)
+
+        return cleaned
 
 
 class StudentUpdate(BaseModel):
@@ -60,8 +74,22 @@ class StudentUpdate(BaseModel):
     phone_number: Optional[str] = Field(
         default=None,
         min_length=10,
-        max_length=15
+        max_length=10
     )
+
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, value: Optional[str]):
+        if value is None:
+            return value
+
+        cleaned = value.strip()
+
+        if not is_valid_indian_mobile_phone(cleaned):
+            raise ValueError(PHONE_VALIDATION_MESSAGE)
+
+        return cleaned
+
 
 class StudentPut(BaseModel):
     full_name: str = Field(
@@ -79,11 +107,21 @@ class StudentPut(BaseModel):
         le=8
     )
 
-    phone_number: Optional[str] = Field(
-        default=None,
+    phone_number: str = Field(
         min_length=10,
-        max_length=15
+        max_length=10
     )
+
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, value: str):
+        cleaned = value.strip()
+
+        if not is_valid_indian_mobile_phone(cleaned):
+            raise ValueError(PHONE_VALIDATION_MESSAGE)
+
+        return cleaned
+
 
 class StudentRead(BaseModel):
     id: int

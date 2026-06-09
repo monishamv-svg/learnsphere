@@ -14,6 +14,7 @@ dist/
 # Testing
 .coverage
 htmlcov/
+frontend/coverage/
 
 # IDE
 .vscode/

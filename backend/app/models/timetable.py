@@ -21,6 +21,6 @@ class Timetable(Base):
 
     instructor_name = Column(String, nullable=False)
 
-    course = relationship("Course", back_populates="timetable_entries")  ##Many-to-one relationship with Course
+    course = relationship("Course", back_populates="timetable_entries")
 
-    attendance_records = relationship("Attendance", back_populates="timetable")  ##Many-to-one relationship with Attendance
+    attendance_records = relationship("Attendance", back_populates="timetable")

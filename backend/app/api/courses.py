@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -20,6 +20,7 @@ from app.services.course_service import (
     delete_course
 )
 from app.schemas.common import StandardResponse
+from app.schemas.pagination import CoursePagination
 
 router = APIRouter()
 
@@ -40,16 +41,32 @@ def create_course_api(
         )
 
 
-@router.get("/", response_model=List[CourseRead])
+@router.get("/", response_model=CoursePagination)
 def get_courses_api(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=10, ge=1, le=100),
+    credits: Optional[int] = Query(
+        default=None,
+        ge=1,
+        le=6
+    ),
+    department: Optional[str] = None,
+    semester: Optional[int] = Query(
+        default=None,
+        ge=1,
+        le=8
+    ),
+    is_elective: Optional[bool] = None,
     db: Session = Depends(get_db)
 ):
     return get_all_courses(
         db,
         skip,
-        limit
+        limit,
+        credits,
+        department,
+        semester,
+        is_elective
     )
 
 
@@ -75,7 +92,7 @@ def get_course_api(
     return StandardResponse[CourseRead](
         success=True,
         message="Course fetched successfully",
-        data=CourseRead.model_validate(course)
+        data=course
     )
 
 

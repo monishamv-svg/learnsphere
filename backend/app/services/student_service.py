@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.student import Student
@@ -46,13 +47,32 @@ def get_all_students(
     db: Session,
     skip: int = 0,
     limit: int = 10,
-    search: str = None
+    search: str = None,
+    department: str = None,
+    semester: int = None
 ):
     query = db.query(Student).options(joinedload(Student.user))
 
     if search:
+        term = f"%{search.strip()}%"
+
         query = query.join(Student.user).filter(
-            User.full_name.ilike(f"%{search}%")
+            or_(
+                User.full_name.ilike(term),
+                User.email.ilike(term),
+                Student.student_code.ilike(term),
+                Student.phone_number.ilike(term),
+            )
+        )
+
+    if department:
+        query = query.filter(
+            Student.department == department
+        )
+
+    if semester is not None:
+        query = query.filter(
+            Student.semester == semester
         )
 
     total_count = query.count()

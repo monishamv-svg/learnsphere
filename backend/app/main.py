@@ -3,6 +3,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import SQLAlchemyError
 
+from sqlalchemy import text
+
 from app.core.config import settings
 from app.db.database import Base, engine
 
@@ -129,6 +131,14 @@ def root():
 
 @app.get("/health")
 def health_check():
+    db_status = "connected"
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except Exception:
+        db_status = "disconnected"
+
     return {
-        "status": "healthy"
+        "status": "healthy" if db_status == "connected" else "degraded",
+        "database": db_status,
     }

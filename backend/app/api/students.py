@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from fastapi import Query
+from typing import List, Optional
 
 from app.db.session import get_db
 from app.schemas.student import StudentCreate, StudentRead
@@ -20,7 +21,6 @@ from app.services.student_service import (
     delete_student
 )
 from app.core.security import (require_admin, get_current_user)
-from typing import List
 
 router = APIRouter()
 
@@ -49,13 +49,23 @@ def get_students_api(
 
     search: str = None,
 
+    department: Optional[str] = None,
+
+    semester: Optional[int] = Query(
+        default=None,
+        ge=1,
+        le=8
+    ),
+
     db: Session = Depends(get_db)
 ):
     return get_all_students(
         db,
         skip,
         limit,
-        search
+        search,
+        department,
+        semester
     )
 
 

@@ -17,6 +17,6 @@ class Attendance(Base):
 
     status = Column(String, nullable=False)
 
-    student = relationship("Student", back_populates="attendance_records")  ##Many-to-one relationship with Student
+    student = relationship("Student", back_populates="attendance_records")
 
-    timetable = relationship("Timetable", back_populates="attendance_records")  ##Many-to-one relationship with Timetable
+    timetable = relationship("Timetable", back_populates="attendance_records")
