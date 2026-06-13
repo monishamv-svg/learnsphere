@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.logger import logger
 from app.core.security import get_current_user
 from app.db.session import get_db
@@ -25,6 +26,12 @@ def register(
     user: UserCreate,
     db: Session = Depends(get_db)
 ):
+    if not settings.ALLOW_PUBLIC_REGISTRATION:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Public registration is disabled",
+        )
+
     existing_user = get_user_by_email(
         db,
         user.email

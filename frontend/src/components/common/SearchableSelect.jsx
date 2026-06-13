@@ -39,17 +39,9 @@ function SearchableSelect({
     )
   }, [options, search])
 
-  useEffect(() => {
-    if (selectedOption && !open) {
-      setSearch(selectedOption.label)
-    }
-  }, [selectedOption, open])
-
-  useEffect(() => {
-    if (!value) {
-      setSearch("")
-    }
-  }, [value])
+  const inputValue = open
+    ? search
+    : (selectedOption?.label ?? "")
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -89,7 +81,7 @@ function SearchableSelect({
       <div ref={containerRef} className="relative">
         <Input
           id={id}
-          value={search}
+          value={inputValue}
           onChange={(e) => {
             setSearch(e.target.value)
             setOpen(true)
@@ -98,7 +90,10 @@ function SearchableSelect({
               onChange("")
             }
           }}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            setSearch(selectedOption?.label ?? "")
+            setOpen(true)
+          }}
           placeholder={placeholder}
           disabled={disabled}
           autoComplete="off"

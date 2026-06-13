@@ -34,10 +34,18 @@ function SemesterScheduleView({
   const [generating, setGenerating] = useState(false)
 
   useEffect(() => {
-    setLoadingSummaries(true)
+    let active = true
 
-    api.get("/timetables/schedules")
-      .then((response) => {
+    async function loadSummaries() {
+      setLoadingSummaries(true)
+
+      try {
+        const response = await api.get("/timetables/schedules")
+
+        if (!active) {
+          return
+        }
+
         const items = response.data.schedules ?? []
         setSummaries(items)
 
@@ -52,34 +60,57 @@ function SemesterScheduleView({
             )
           }
         }
-      })
-      .finally(() => {
-        setLoadingSummaries(false)
-      })
+      } finally {
+        if (active) {
+          setLoadingSummaries(false)
+        }
+      }
+    }
+
+    loadSummaries()
+
+    return () => {
+      active = false
+    }
   }, [refreshKey])
 
   useEffect(() => {
-    setLoadingSchedule(true)
+    let active = true
 
-    const params = {}
+    async function loadSchedule() {
+      setLoadingSchedule(true)
 
-    if (departmentFilter !== "All") {
-      params.department = departmentFilter
+      const params = {}
+
+      if (departmentFilter !== "All") {
+        params.department = departmentFilter
+      }
+
+      try {
+        const response = await api.get(
+          `/timetables/schedules/${selectedSemester}`,
+          { params }
+        )
+
+        if (active) {
+          setSchedule(response.data)
+        }
+      } catch {
+        if (active) {
+          setSchedule(null)
+        }
+      } finally {
+        if (active) {
+          setLoadingSchedule(false)
+        }
+      }
     }
 
-    api.get(
-      `/timetables/schedules/${selectedSemester}`,
-      { params }
-    )
-      .then((response) => {
-        setSchedule(response.data)
-      })
-      .catch(() => {
-        setSchedule(null)
-      })
-      .finally(() => {
-        setLoadingSchedule(false)
-      })
+    loadSchedule()
+
+    return () => {
+      active = false
+    }
   }, [selectedSemester, departmentFilter, refreshKey])
 
   const handleGenerate = async ({ mode, department }) => {

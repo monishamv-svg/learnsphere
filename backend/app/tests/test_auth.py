@@ -1,6 +1,10 @@
 """Authentication endpoint tests."""
 
+from unittest.mock import patch
+
 import pytest
+
+from app.core.config import settings
 
 
 class TestAuthRegister:
@@ -32,6 +36,20 @@ class TestAuthRegister:
 
         assert response.status_code == 400
         assert "already registered" in response.json()["detail"].lower()
+
+    def test_register_disabled_when_public_registration_off(self, client):
+        payload = {
+            "full_name": "Blocked User",
+            "email": "blocked@test.com",
+            "password": "secret12",
+            "role": "student",
+        }
+
+        with patch.object(settings, "ALLOW_PUBLIC_REGISTRATION", False):
+            response = client.post("/auth/register", json=payload)
+
+        assert response.status_code == 403
+        assert "disabled" in response.json()["detail"].lower()
 
 
 class TestAuthLogin:

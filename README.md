@@ -89,6 +89,25 @@ VITE_API_BASE_URL=http://localhost:8000 npm run dev
 
 App available at [http://localhost:5173](http://localhost:5173).
 
+### 4. Full stack in containers (production-like, optional)
+
+Runs PostgreSQL + API + nginx-served React. Useful before cloud deploy.
+
+```bash
+podman compose --profile stack up --build -d
+# or: docker compose --profile stack up --build -d
+
+# First run only — seed demo data
+podman-compose --profile stack exec backend env PYTHONPATH=/app python scripts/seed_data.py
+```
+
+| Service | URL |
+|---------|-----|
+| API | http://localhost:8000 |
+| Web app | http://localhost:8081 |
+
+See [docs/DEPLOYMENT_RUNBOOK.md](docs/DEPLOYMENT_RUNBOOK.md) for verification, troubleshooting, and GCP steps.
+
 ### Demo credentials
 
 After running the seed script:
@@ -104,15 +123,19 @@ After running the seed script:
 
 Copy from `backend/.env.example`. Key variables:
 
-- `SECRET_KEY` — JWT signing key (change in production)
+- `SECRET_KEY` — JWT signing key (change in production; min 32 chars when `APP_ENV=production`)
+- `CORS_ORIGINS` — comma-separated frontend URLs allowed by the API
+- `ALLOW_PUBLIC_REGISTRATION` — set `true` to allow `/auth/register` (defaults off in production)
 - `POSTGRES_*` — database connection (defaults match `docker-compose.yml`)
 - `DATABASE_URL` — optional full connection string (overrides `POSTGRES_*`)
 
-### Frontend
+### Frontend (`frontend/.env.example`)
+
+Copy to `frontend/.env` for local development, or export when starting Vite:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VITE_API_BASE_URL` | — | Backend API URL (required at build/runtime) |
+| `VITE_API_BASE_URL` | `http://localhost:8000` | Backend API URL (required at build/runtime) |
 
 ## Testing
 
@@ -129,22 +152,18 @@ npm run test:coverage
 
 See [TEST_COVERAGE_MATRIX.md](TEST_COVERAGE_MATRIX.md) for module-level coverage details.
 
-## Documentation
-
-| Resource | Description |
-|----------|-------------|
-| [docs/database-schema-diagram.html](docs/database-schema-diagram.html) | Interactive ER diagram |
-| [docs/microservices-interaction-diagram.html](docs/microservices-interaction-diagram.html) | Service interaction overview |
-| `docs/*.csv` | Lucidchart import files for schema and relationships |
 
 ## CI/CD
 
 GitHub Actions runs on pushes and PRs to `main` and `develop`:
 
 - **Backend** — Pytest with coverage gate (in-memory SQLite)
-- **Frontend** — ESLint + Jest with coverage gate
+- **Frontend** — ESLint, Jest with coverage gate
+- **Containers** — Docker build validation for backend and frontend `Containerfile`s
 
-Deployment target: Google Cloud Run (containerized services).
+On merge to `main`, **Deploy to Cloud Run** (`.github/workflows/deploy.yml`) runs automatically once GCP GitHub Secrets are configured. Until sandbox access is provisioned, that job is skipped.
+
+Deployment guide: [docs/DEPLOYMENT_RUNBOOK.md](docs/DEPLOYMENT_RUNBOOK.md)
 
 ## Project Status
 

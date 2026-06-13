@@ -20,7 +20,7 @@ This matrix maps every major module to the tests that cover it. Use it as a chec
 | **User Management** | ⬜ Service layer | ✅ `/users/` CRUD | 🔶 Via Pydantic on create | ✅ 403 for student, 404 not found | ⬜ |
 | **Student Management** | ⬜ Service layer | ✅ `/students/` CRUD + filters | ✅ Phone, semester | ✅ 403 for student create | ⬜ |
 | **Course Management** | ⬜ Service layer | ✅ `/courses/` CRUD | ✅ Invalid credits | ✅ 403, 404 | ⬜ |
-| **Enrollment Management** | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| **Enrollment Management** | ⬜ | ✅ `/enrollments/` CRUD | 🔶 Via enrollment rules | ✅ Duplicate, forbidden roles | ⬜ |
 | **Attendance Management** | ⬜ Service layer | ✅ Mark, list, %, update, delete | ✅ Status enum | ✅ 403 for student | ⬜ |
 | **Timetable Scheduling** | ⬜ Auto-schedule | ✅ CRUD, `/me`, schedules | ✅ Time parsing | ✅ 401/403 | ✅ StudentTimetablePage |
 | **Dashboard APIs** | ⬜ Service layer | ✅ Admin stats, student `/me` | N/A | ✅ Role-based 403 | ✅ AdminDashboard |
@@ -39,6 +39,7 @@ This matrix maps every major module to the tests that cover it. Use it as a chec
 | `app/tests/test_students.py` | Student CRUD and filters |
 | `app/tests/test_courses.py` | Course CRUD |
 | `app/tests/test_attendance.py` | Attendance lifecycle |
+| `app/tests/test_enrollments.py` | Enrollment CRUD + student self-enroll |
 | `app/tests/test_timetables.py` | Timetable CRUD + student view |
 | `app/tests/test_dashboard.py` | Role-based dashboard access |
 | `app/tests/test_validation.py` | Pydantic + API 422 errors |
@@ -69,7 +70,6 @@ CI fails automatically if either layer drops below 70% or any test fails.
 
 ## Recommended Next Steps (Optional)
 
-1. Add enrollment API tests (`test_enrollments.py`)
-2. Add service-layer unit tests with mocked DB sessions
+1. Add service-layer unit tests with mocked DB sessions
 3. Add frontend tests for `StudentDashboard`, `TimetablePage` (admin CRUD)
 4. Add E2E tests with Playwright or Cypress for full user journeys

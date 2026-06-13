@@ -1,10 +1,14 @@
 import logging
 import os
 
-# Create logs directory if not exists
-os.makedirs("logs", exist_ok=True)
+from app.core.config import settings
 
-# Configure logging
+handlers: list[logging.Handler] = [logging.StreamHandler()]
+
+if settings.APP_ENV != "production":
+    os.makedirs("logs", exist_ok=True)
+    handlers.append(logging.FileHandler("logs/app.log"))
+
 logging.basicConfig(
     level=logging.INFO,
     format=(
@@ -13,10 +17,7 @@ logging.basicConfig(
         "%(name)s | "
         "%(message)s"
     ),
-    handlers=[
-        logging.FileHandler("logs/app.log"),
-        logging.StreamHandler()
-    ]
+    handlers=handlers,
 )
 
 logger = logging.getLogger("learnsphere")
