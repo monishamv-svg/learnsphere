@@ -1,0 +1,33 @@
+# Secrets and local tooling
+.env
+.venv
+
+# Python artifacts
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+
+# Tests and dev-only files
+app/tests
+pytest.ini
+requirements-dev.txt
+pyrightconfig.json
+
+# Coverage and logs
+htmlcov
+coverage.xml
+.coverage
+logs
+*.log
+
+# Local database files
+*.db
+
+# Documentation (not needed at runtime)
+docs
+
+# OS / VCS
+.DS_Store
+.git
+.gitignore

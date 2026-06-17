@@ -1,0 +1,24 @@
+# Dependencies and build output (rebuilt inside the image)
+node_modules
+dist
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Tests and coverage
+coverage
+**/*.test.jsx
+**/*.test.js
+jest.config.cjs
+babel.config.cjs
+setupTests.js
+test-utils.jsx
+
+# Dev tooling
+eslint.config.js
+.DS_Store
+.git
+.gitignore
+README.md
