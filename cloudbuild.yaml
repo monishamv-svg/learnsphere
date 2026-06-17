@@ -1,0 +1,138 @@
+# LearnSphere CD pipeline — runs on push to main via Cloud Build trigger.
+# CI (tests) stays in .github/workflows/ci.yml
+
+substitutions:
+  _REGION: us-central1
+  _REPOSITORY: learnsphere
+  _BACKEND_SERVICE: learnsphere-backend
+  _FRONTEND_SERVICE: learnsphere-frontend
+  _CLOUDSQL_INSTANCE: sbox-monishamv-001-20260612:us-central1:learnsphere-db
+
+steps:
+  # ── Backend image ──────────────────────────────────────────────────────────
+  - name: gcr.io/cloud-builders/docker
+    id: build-backend
+    args:
+      - build
+      - -f
+      - backend/Containerfile
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/learnsphere-backend:$COMMIT_SHA
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/learnsphere-backend:latest
+      - backend
+
+  - name: gcr.io/cloud-builders/docker
+    id: push-backend
+    waitFor: [build-backend]
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/learnsphere-backend
+
+  # ── Deploy backend (Cloud SQL connector + secrets from Secret Manager) ───
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    id: deploy-backend
+    waitFor: [push-backend]
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_BACKEND_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/learnsphere-backend:$COMMIT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=8080
+      - --add-cloudsql-instances=${_CLOUDSQL_INSTANCE}
+      - --set-env-vars=APP_ENV=production,ALLOW_PUBLIC_REGISTRATION=false
+      - --set-secrets=SECRET_KEY=learnsphere-secret-key:latest,DATABASE_URL=learnsphere-database-url:latest
+      - --quiet
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    id: get-backend-url
+    waitFor: [deploy-backend]
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud run services describe ${_BACKEND_SERVICE} \
+          --region=${_REGION} \
+          --format='value(status.url)' > /workspace/backend_url.txt
+        echo "Backend URL: $(cat /workspace/backend_url.txt)"
+
+  # ── Frontend image (API URL baked in at build time) ───────────────────────
+  - name: gcr.io/cloud-builders/docker
+    id: build-frontend
+    waitFor: [get-backend-url]
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        BACKEND_URL="$(cat /workspace/backend_url.txt)"
+        docker build -f frontend/Containerfile \
+          --build-arg "VITE_API_BASE_URL=$${BACKEND_URL}" \
+          -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/learnsphere-frontend:$COMMIT_SHA \
+          -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/learnsphere-frontend:latest \
+          frontend
+
+  - name: gcr.io/cloud-builders/docker
+    id: push-frontend
+    waitFor: [build-frontend]
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/learnsphere-frontend
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    id: deploy-frontend
+    waitFor: [push-frontend]
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_FRONTEND_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/learnsphere-frontend:$COMMIT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=8080
+      - --quiet
+
+  # ── Point backend CORS at the live frontend URL ───────────────────────────
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    id: get-frontend-url
+    waitFor: [deploy-frontend]
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud run services describe ${_FRONTEND_SERVICE} \
+          --region=${_REGION} \
+          --format='value(status.url)' > /workspace/frontend_url.txt
+        echo "Frontend URL: $(cat /workspace/frontend_url.txt)"
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    id: update-backend-cors
+    waitFor: [get-frontend-url]
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        FRONTEND_URL="$(cat /workspace/frontend_url.txt)"
+        gcloud run services update ${_BACKEND_SERVICE} \
+          --region=${_REGION} \
+          --update-env-vars="CORS_ORIGINS=$${FRONTEND_URL}" \
+          --quiet
+        echo "CORS_ORIGINS set to $${FRONTEND_URL}"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1200s
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/learnsphere-backend:$COMMIT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/learnsphere-frontend:$COMMIT_SHA
