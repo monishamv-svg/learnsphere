@@ -119,6 +119,11 @@ def validate_production_settings(settings: Settings) -> None:
             "Database credentials must be changed in production"
         )
 
+    # When DATABASE_URL is set (e.g. Cloud Run + Cloud SQL socket), credentials
+    # are validated via the URL; POSTGRES_PASSWORD may be unset.
+    if os.getenv("DATABASE_URL"):
+        return
+
     password = os.getenv("POSTGRES_PASSWORD", INSECURE_DB_PASSWORD)
     if password == INSECURE_DB_PASSWORD:
         raise RuntimeError(
