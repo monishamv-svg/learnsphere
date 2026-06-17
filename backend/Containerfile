@@ -12,5 +12,5 @@ COPY . .
 ENV PORT=8080
 EXPOSE 8080
 
-# Cloud Run sets PORT at runtime; sh -c expands ${PORT} (exec-form CMD cannot).
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
+# Cloud Run terminates TLS; proxy-headers makes redirects use https (avoids mixed-content).
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips='*'"]

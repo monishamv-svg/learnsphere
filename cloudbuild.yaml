@@ -58,7 +58,8 @@ steps:
       - |
         gcloud run services describe ${_BACKEND_SERVICE} \
           --region=${_REGION} \
-          --format='value(status.url)' > /workspace/backend_url.txt
+          --format='value(status.url)' \
+          | sed 's|^http://|https://|' > /workspace/backend_url.txt
         echo "Backend URL: $(cat /workspace/backend_url.txt)"
 
   # ── Frontend image (API URL baked in at build time) ───────────────────────
