@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 
 import { FiChevronDown, FiChevronRight } from "react-icons/fi"
 
@@ -280,28 +280,21 @@ function DepartmentAttendanceSection({
     })
   }, [filteredRecords])
 
-  const paginatedRecords = useMemo(() => {
-    const start = page * PAGE_SIZE
-
-    return filteredRecords.slice(start, start + PAGE_SIZE)
-  }, [filteredRecords, page])
-
   const totalPages = Math.max(
     1,
     Math.ceil(filteredRecords.length / PAGE_SIZE)
   )
 
-  useEffect(() => {
-    setPage(0)
-  }, [
-    dayFilter,
-    semesterFilter,
-    courseFilter,
-    appliedStudentSearch,
-    statusFilter
-  ])
+  const safePage = Math.min(page, totalPages - 1)
+
+  const paginatedRecords = useMemo(() => {
+    const start = safePage * PAGE_SIZE
+
+    return filteredRecords.slice(start, start + PAGE_SIZE)
+  }, [filteredRecords, safePage])
 
   const handleSearch = () => {
+    setPage(0)
     setAppliedStudentSearch(studentSearch.trim())
   }
 
@@ -350,7 +343,10 @@ function DepartmentAttendanceSection({
           <div className="flex flex-wrap gap-2 mb-4">
             <Select
               value={semesterFilter}
-              onChange={(e) => setSemesterFilter(e.target.value)}
+              onChange={(e) => {
+                setPage(0)
+                setSemesterFilter(e.target.value)
+              }}
               className="max-w-[130px] text-sm"
             >
               {SEMESTER_OPTIONS.map((semester) => (
@@ -364,7 +360,10 @@ function DepartmentAttendanceSection({
 
             <Select
               value={dayFilter}
-              onChange={(e) => setDayFilter(e.target.value)}
+              onChange={(e) => {
+                setPage(0)
+                setDayFilter(e.target.value)
+              }}
               className="max-w-[130px] text-sm"
             >
               {DAY_OPTIONS.map((day) => (
@@ -376,7 +375,10 @@ function DepartmentAttendanceSection({
 
             <Select
               value={courseFilter}
-              onChange={(e) => setCourseFilter(e.target.value)}
+              onChange={(e) => {
+                setPage(0)
+                setCourseFilter(e.target.value)
+              }}
               className="max-w-[220px] text-sm"
             >
               <option value="All">All Courses</option>
@@ -396,6 +398,7 @@ function DepartmentAttendanceSection({
                 setStudentSearch(value)
 
                 if (!value.trim()) {
+                  setPage(0)
                   setAppliedStudentSearch("")
                 }
               }}
@@ -453,13 +456,13 @@ function DepartmentAttendanceSection({
               {filteredRecords.length > PAGE_SIZE && (
                 <div className="flex items-center justify-between mt-3 text-sm text-gray-600">
                   <span>
-                    Page {page + 1} of {totalPages}
+                    Page {safePage + 1} of {totalPages}
                   </span>
 
                   <div className="flex gap-2">
                     <Button
                       onClick={() => setPage((p) => p - 1)}
-                      disabled={page === 0}
+                      disabled={safePage === 0}
                       className="bg-slate-500 text-sm px-3 py-1.5"
                     >
                       Previous
@@ -467,7 +470,7 @@ function DepartmentAttendanceSection({
 
                     <Button
                       onClick={() => setPage((p) => p + 1)}
-                      disabled={page >= totalPages - 1}
+                      disabled={safePage >= totalPages - 1}
                       className="bg-slate-500 text-sm px-3 py-1.5"
                     >
                       Next

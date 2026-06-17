@@ -20,8 +20,10 @@ function StudentAttendancePage() {
       })
   }, [])
 
-  const attendanceByCourse =
-    dashboard?.attendance_by_course ?? []
+  const attendanceByCourse = useMemo(
+    () => dashboard?.attendance_by_course ?? [],
+    [dashboard?.attendance_by_course]
+  )
 
   const overallPercentage = useMemo(() => {
     if (!attendanceByCourse.length) {
