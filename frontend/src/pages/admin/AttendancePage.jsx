@@ -9,6 +9,7 @@ import api from "../../api/axios"
 
 import DashboardLayout from "../../components/layout/DashboardLayout"
 import DepartmentAttendanceSection from "../../components/attendance/DepartmentAttendanceSection"
+import MarkAttendancePanel from "../../components/attendance/MarkAttendancePanel"
 import Button from "../../components/common/Button"
 import Input from "../../components/common/Input"
 import Select from "../../components/common/Select"
@@ -169,6 +170,53 @@ async function fetchAllCourses() {
   return courseItems
 }
 
+async function fetchAllStudents() {
+  const studentItems = []
+  let skip = 0
+  let totalStudents
+
+  do {
+    const response = await api.get("/students", {
+      params: {
+        skip,
+        limit: STUDENT_FETCH_LIMIT
+      }
+    })
+
+    studentItems.push(...response.data.items)
+    totalStudents = response.data.total_count
+    skip += STUDENT_FETCH_LIMIT
+  } while (studentItems.length < totalStudents)
+
+  return studentItems
+}
+
+async function fetchAllAttendanceRecords() {
+  const records = []
+  let skip = 0
+
+  while (true) {
+    const response = await api.get("/attendance", {
+      params: {
+        skip,
+        limit: ATTENDANCE_FETCH_LIMIT
+      }
+    })
+
+    const batch = response.data ?? []
+
+    records.push(...batch)
+
+    if (batch.length < ATTENDANCE_FETCH_LIMIT) {
+      break
+    }
+
+    skip += ATTENDANCE_FETCH_LIMIT
+  }
+
+  return records
+}
+
 function AttendancePage() {
   const [attendanceRecords, setAttendanceRecords] =
     useState([])
@@ -228,18 +276,8 @@ function AttendancePage() {
         enrollmentsResult,
         coursesResult
       ] = await Promise.allSettled([
-        api.get("/attendance", {
-          params: {
-            skip: 0,
-            limit: ATTENDANCE_FETCH_LIMIT
-          }
-        }),
-        api.get("/students", {
-          params: {
-            skip: 0,
-            limit: STUDENT_FETCH_LIMIT
-          }
-        }),
+        fetchAllAttendanceRecords(),
+        fetchAllStudents(),
         api.get("/timetables", {
           params: {
             skip: 0,
@@ -256,18 +294,14 @@ function AttendancePage() {
       ])
 
       if (attendanceResult.status === "fulfilled") {
-        setAttendanceRecords(
-          attendanceResult.value.data ?? []
-        )
+        setAttendanceRecords(attendanceResult.value ?? [])
       } else {
         setAttendanceRecords([])
         console.error(attendanceResult.reason)
       }
 
       if (studentsResult.status === "fulfilled") {
-        setStudents(
-          studentsResult.value.data.items ?? []
-        )
+        setStudents(studentsResult.value ?? [])
       } else {
         setStudents([])
         console.error(studentsResult.reason)
@@ -366,12 +400,11 @@ function AttendancePage() {
   )
 
   const visibleDepartments = useMemo(() => {
-    const departments =
-      departmentFilter === "All"
-        ? DEPARTMENTS
-        : [departmentFilter]
+    if (departmentFilter !== "All") {
+      return [departmentFilter]
+    }
 
-    return departments.filter(
+    return DEPARTMENTS.filter(
       (department) =>
         (recordsByDepartment[department]?.length ?? 0) > 0
     )
@@ -556,6 +589,20 @@ function AttendancePage() {
 
   const hasVisibleRecords = visibleDepartments.length > 0
 
+  const professorNames = useMemo(() => {
+    const names = new Set()
+
+    timetables.forEach((timetable) => {
+      if (timetable.instructor_name?.trim()) {
+        names.add(timetable.instructor_name.trim())
+      }
+    })
+
+    return Array.from(names).sort((a, b) =>
+      a.localeCompare(b)
+    )
+  }, [timetables])
+
   if (fetching) {
     return (
       <DashboardLayout>
@@ -578,6 +625,14 @@ function AttendancePage() {
           + Attendance
         </Button>
       </div>
+
+      <MarkAttendancePanel
+        professorNames={professorNames}
+        onSaved={(message) => {
+          showToast("success", message)
+          fetchAttendance()
+        }}
+      />
 
       <div className="flex flex-wrap gap-3 mb-8">
         <Input
@@ -633,12 +688,19 @@ function AttendancePage() {
           <option value="All">All Statuses</option>
           <option value="Present">Present</option>
           <option value="Absent">Absent</option>
-          <option value="Late">Late</option>
         </Select>
       </div>
 
       {!hasAnyRecords ? (
         <EmptyState message="No attendance records found" />
+      ) : departmentFilter !== "All" ? (
+        <DepartmentAttendanceSection
+          department={departmentFilter}
+          records={recordsByDepartment[departmentFilter] ?? []}
+          statusFilter={statusFilter}
+          onEdit={openEditModal}
+          onDelete={setConfirmDelete}
+        />
       ) : !hasVisibleRecords ? (
         <EmptyState message="No attendance records match your filters" />
       ) : (
@@ -830,9 +892,6 @@ function AttendancePage() {
             </option>
             <option value="Absent">
               Absent
-            </option>
-            <option value="Late">
-              Late
             </option>
           </Select>
 

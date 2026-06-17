@@ -10,65 +10,19 @@ import StatCard from "../../components/dashboard/StatCard"
 import Loader from "../../components/common/Loader"
 import DepartmentChart from "../../components/charts/DepartmentChart"
 import SemesterChart from "../../components/charts/SemesterChart"
-
-function buildDepartmentData(students) {
-  const counts = {}
-
-  students.forEach((student) => {
-    const dept = student.department || "Unknown"
-    counts[dept] = (counts[dept] || 0) + 1
-  })
-
-  return Object.entries(counts).map(([name, count]) => ({
-    name,
-    count
-  }))
-}
-
-function buildSemesterData(students) {
-  const counts = {}
-
-  students.forEach((student) => {
-    const semester = student.semester ?? 0
-    counts[semester] = (counts[semester] || 0) + 1
-  })
-
-  return Object.entries(counts)
-    .sort(
-      ([left], [right]) => Number(left) - Number(right)
-    )
-    .map(([semester, count]) => ({
-      name: `Sem ${semester}`,
-      count
-    }))
-}
+import DashboardAnalyticsPanel from "../../components/dashboard/DashboardAnalyticsPanel"
 
 function AdminDashboard() {
   const [stats, setStats] = useState(null)
-  const [chartData, setChartData] = useState({
-    departments: [],
-    semesters: []
-  })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [statsRes, studentsRes] = await Promise.all([
-          api.get("/dashboard/stats"),
-          api.get("/students", {
-            params: { skip: 0, limit: 100 }
-          })
-        ])
-
-        const students = studentsRes.data.items ?? []
+        const statsRes = await api.get("/dashboard/stats")
 
         setStats(statsRes.data)
-        setChartData({
-          departments: buildDepartmentData(students),
-          semesters: buildSemesterData(students)
-        })
       } catch (error) {
         console.error(error)
         setError(
@@ -156,23 +110,25 @@ function AdminDashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
         <DepartmentChart
           data={
-            chartData.departments.length
-              ? chartData.departments
+            stats.students_by_department?.length
+              ? stats.students_by_department
               : [{ name: "No data", count: 0 }]
           }
         />
 
         <SemesterChart
           data={
-            chartData.semesters.length
-              ? chartData.semesters
+            stats.students_by_semester?.length
+              ? stats.students_by_semester
               : [{ name: "No data", count: 0 }]
           }
         />
       </div>
+
+      <DashboardAnalyticsPanel stats={stats} />
     </DashboardLayout>
   )
 }

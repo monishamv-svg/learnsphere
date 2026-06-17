@@ -19,6 +19,12 @@ jest.mock("../../components/charts/SemesterChart", () => {
   }
 })
 
+jest.mock("../../components/dashboard/DashboardAnalyticsPanel", () => {
+  return function MockDashboardAnalyticsPanel() {
+    return <div data-testid="analytics-panel" />
+  }
+})
+
 const mockGet = jest.fn()
 
 jest.mock("../../api/axios", () => ({
@@ -57,18 +63,14 @@ describe("AdminDashboard", () => {
             enrollments: 20,
             attendance_records: 50,
             timetable_entries: 8,
-          },
-        })
-      }
-
-      if (url === "/students") {
-        return Promise.resolve({
-          data: {
-            items: [
-              {
-                department: "Computer Science",
-                semester: 3,
-              },
+            students_by_department: [
+              { name: "Computer Science", count: 10 }
+            ],
+            students_by_semester: [
+              { name: "Sem 3", count: 10 }
+            ],
+            classes_by_weekday: [
+              { name: "Mon", full_name: "Monday", count: 5 }
             ],
           },
         })
@@ -88,6 +90,7 @@ describe("AdminDashboard", () => {
     expect(screen.getByText("5")).toBeInTheDocument()
     expect(screen.getByTestId("department-chart")).toBeInTheDocument()
     expect(screen.getByTestId("semester-chart")).toBeInTheDocument()
+    expect(screen.getByTestId("analytics-panel")).toBeInTheDocument()
   })
 
   it("shows an error message when the API fails", async () => {
@@ -102,7 +105,7 @@ describe("AdminDashboard", () => {
     ).toBeInTheDocument()
   })
 
-  it("calls dashboard and student list endpoints", async () => {
+  it("calls the dashboard stats endpoint", async () => {
     mockGet.mockImplementation((url) => {
       if (url === "/dashboard/stats") {
         return Promise.resolve({
@@ -112,20 +115,20 @@ describe("AdminDashboard", () => {
             enrollments: 0,
             attendance_records: 0,
             timetable_entries: 0,
+            students_by_department: [],
+            students_by_semester: [],
           },
         })
       }
 
-      return Promise.resolve({ data: { items: [] } })
+      return Promise.reject(new Error("Unexpected URL"))
     })
 
     render(<AdminDashboard />)
 
     await waitFor(() => {
       expect(mockGet).toHaveBeenCalledWith("/dashboard/stats")
-      expect(mockGet).toHaveBeenCalledWith("/students", {
-        params: { skip: 0, limit: 100 },
-      })
+      expect(mockGet).toHaveBeenCalledTimes(1)
     })
   })
 })

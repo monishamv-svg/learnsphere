@@ -1,5 +1,7 @@
 from typing import List
 
+from datetime import date
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -9,19 +11,28 @@ from sqlalchemy.orm import Session
 
 from app.core.security import (require_admin, get_current_user)
 from app.db.session import get_db
-from app.schemas.attendance import (
-    AttendanceCreate,
-    AttendanceRead,
-    AttendanceUpdate,
-    AttendancePut
-)
 from app.services.attendance_service import (
     mark_attendance,
     get_all_attendance,
     calculate_attendance_percentage,
     update_attendance,
     replace_attendance,
-    delete_attendance
+    delete_attendance,
+    get_professor_sessions,
+    get_session_roster,
+    bulk_mark_attendance,
+    get_student_attendance_by_course,
+)
+from app.schemas.attendance import (
+    AttendanceCreate,
+    AttendanceRead,
+    AttendanceUpdate,
+    AttendancePut,
+    AttendanceBulkCreate,
+    AttendanceBulkResult,
+    ProfessorSessionRead,
+    SessionRosterStudent,
+    CourseAttendanceSummary,
 )
 
 router = APIRouter()
@@ -151,3 +162,81 @@ def delete_attendance_api(
         )
 
     return deleted_attendance
+
+
+@router.get(
+    "/professor-sessions",
+    response_model=List[ProfessorSessionRead]
+)
+def get_professor_sessions_api(
+    professor_name: str,
+    attendance_date: date,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_admin)
+):
+    return get_professor_sessions(
+        db,
+        professor_name,
+        attendance_date
+    )
+
+
+@router.get(
+    "/session-roster",
+    response_model=List[SessionRosterStudent]
+)
+def get_session_roster_api(
+    timetable_id: int,
+    attendance_date: date,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_admin)
+):
+    try:
+        return get_session_roster(
+            db,
+            timetable_id,
+            attendance_date
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+
+
+@router.post(
+    "/bulk",
+    response_model=AttendanceBulkResult
+)
+def bulk_mark_attendance_api(
+    payload: AttendanceBulkCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_admin)
+):
+    return bulk_mark_attendance(db, payload)
+
+
+@router.get(
+    "/me/by-course",
+    response_model=List[CourseAttendanceSummary]
+)
+def get_my_attendance_by_course_api(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    from app.models.student import Student
+
+    student = db.query(Student).filter(
+        Student.user_id == current_user.id
+    ).first()
+
+    if not student:
+        raise HTTPException(
+            status_code=404,
+            detail="Student profile not found"
+        )
+
+    return get_student_attendance_by_course(
+        db,
+        student.id
+    )

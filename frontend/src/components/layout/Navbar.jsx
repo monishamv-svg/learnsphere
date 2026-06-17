@@ -6,6 +6,7 @@ function Navbar() {
   return (
     <header
       className="
+        shrink-0
         bg-white
         border-b
         border-gray-200

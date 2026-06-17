@@ -51,6 +51,7 @@ export function enrichAttendanceRecords(
       studentName: student?.full_name ?? "",
       studentCode: student?.student_code ?? "",
       department: student?.department ?? "",
+      semester: student?.semester ?? null,
       dayOfWeek: timetable?.day_of_week ?? "",
       startTime: timetable?.start_time ?? "",
       endTime: timetable?.end_time ?? "",

@@ -417,7 +417,7 @@ function StudentCoursesPage() {
                   ) : (
                     <div className="mt-4 space-y-3">
                       <p className="text-sm font-medium text-gray-700">
-                        Choose an instructor section:
+                        Choose a professor section:
                       </p>
 
                       {sections.map((section) => {

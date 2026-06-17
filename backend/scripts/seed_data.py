@@ -119,21 +119,6 @@ STUDENT_LAST_NAMES = [
     "Malhotra", "Shetty", "Agarwal", "Nambiar", "Das", "Krishnan",
 ]
 
-SPECIAL_STUDENTS = {
-    (DEPARTMENTS[0], 5): {
-        "full_name": "Rahul Sharma",
-        "email": "rahul@example.com",
-        "student_code": "LS1001",
-        "phone_number": "9876543210",
-    },
-    (DEPARTMENTS[1], 3): {
-        "full_name": "Priya Nair",
-        "email": "priya@example.com",
-        "student_code": "LS1002",
-        "phone_number": "9123456780",
-    },
-}
-
 WEEKDAY_INDEX = {
     "Monday": 0,
     "Tuesday": 1,
@@ -144,7 +129,9 @@ WEEKDAY_INDEX = {
     "Sunday": 6,
 }
 
-ATTENDANCE_SAMPLE_STUDENT_COUNT = 6
+STUDENTS_PER_DEPARTMENT_SEMESTER = 20
+
+ATTENDANCE_STUDENTS_PER_DEPARTMENT_SEMESTER = 3
 ATTENDANCE_COURSES_PER_STUDENT = 2
 ATTENDANCE_DATES_PER_CLASS = 2
 ATTENDANCE_STATUSES = [
@@ -152,7 +139,6 @@ ATTENDANCE_STATUSES = [
     "Present",
     "Present",
     "Absent",
-    "Late",
 ]
 
 
@@ -163,8 +149,8 @@ def parse_hhmm(value):
 
 def clear_course_related_data(db):
     attendance_deleted = db.query(Attendance).delete()
-    timetable_deleted = db.query(Timetable).delete()
     enrollment_deleted = db.query(Enrollment).delete()
+    timetable_deleted = db.query(Timetable).delete()
     course_deleted = db.query(Course).delete()
 
     db.commit()
@@ -180,8 +166,8 @@ def clear_course_related_data(db):
 
 def clear_student_and_scheduling_data(db):
     attendance_deleted = db.query(Attendance).delete()
-    timetable_deleted = db.query(Timetable).delete()
     enrollment_deleted = db.query(Enrollment).delete()
+    timetable_deleted = db.query(Timetable).delete()
 
     student_user_ids = [
         student.user_id
@@ -374,16 +360,10 @@ def build_student_records():
 
     for semester in range(1, 9):
         for department in DEPARTMENTS:
-            key = (department, semester)
             prefix = DEPARTMENT_PREFIX[department].lower()
+            dept_code = DEPARTMENT_PREFIX[department]
 
-            if key in SPECIAL_STUDENTS:
-                student_data = SPECIAL_STUDENTS[key].copy()
-                student_data.update({
-                    "department": department,
-                    "semester": semester,
-                })
-            else:
+            for student_index in range(STUDENTS_PER_DEPARTMENT_SEMESTER):
                 first_name = STUDENT_FIRST_NAMES[
                     name_index % len(STUDENT_FIRST_NAMES)
                 ]
@@ -391,22 +371,28 @@ def build_student_records():
                     name_index % len(STUDENT_LAST_NAMES)
                 ]
                 dept_index = DEPARTMENTS.index(department) + 1
-                phone_suffix = f"{dept_index}{semester}{name_index:02d}"
+                phone_suffix = (
+                    f"{dept_index}{semester}{name_index:04d}"
+                )
                 phone_number = f"9{phone_suffix:0>9}"[:10]
+                roster_number = student_index + 1
 
                 student_data = {
                     "full_name": f"{first_name} {last_name}",
-                    "email": f"{prefix}.sem{semester}@learnsphere.com",
+                    "email": (
+                        f"{prefix}.s{semester}.n{roster_number:02d}"
+                        f"@learnsphere.com"
+                    ),
                     "student_code": (
-                        f"{DEPARTMENT_PREFIX[department]}{semester:02d}"
+                        f"{dept_code}{semester:02d}{roster_number:03d}"
                     ),
                     "department": department,
                     "semester": semester,
                     "phone_number": phone_number,
                 }
 
-            students.append(student_data)
-            name_index += 1
+                students.append(student_data)
+                name_index += 1
 
     return students
 
@@ -441,6 +427,28 @@ def seed_students(db):
     print(f"Seeded {len(students_data)} students")
 
 
+def get_semester_electives(db, semester):
+    return (
+        db.query(Course)
+        .filter(
+            Course.semester == semester,
+            Course.is_elective.is_(True)
+        )
+        .order_by(Course.course_code)
+        .all()
+    )
+
+
+def get_elective_for_department(db, department, semester):
+    electives = get_semester_electives(db, semester)
+
+    if not electives:
+        return None
+
+    department_index = DEPARTMENTS.index(department)
+    return electives[department_index % len(electives)]
+
+
 def get_enrollment_plan_courses(db, department, semester):
     core_courses = (
         db.query(Course)
@@ -454,15 +462,7 @@ def get_enrollment_plan_courses(db, department, semester):
         .all()
     )
 
-    elective = (
-        db.query(Course)
-        .filter(
-            Course.semester == semester,
-            Course.is_elective.is_(True)
-        )
-        .order_by(Course.course_code)
-        .first()
-    )
+    elective = get_elective_for_department(db, department, semester)
 
     if len(core_courses) < 6 or not elective:
         raise ValueError(
@@ -1092,12 +1092,30 @@ def recent_dates_for_weekday(day_name, count=2):
 
 
 def seed_attendance(db):
-    students = (
-        db.query(Student)
-        .order_by(Student.id)
-        .limit(ATTENDANCE_SAMPLE_STUDENT_COUNT)
-        .all()
-    )
+    students = []
+    seen_student_ids = set()
+
+    for semester in range(1, 9):
+        for department in DEPARTMENTS:
+            cohort = (
+                db.query(Student)
+                .filter(
+                    Student.department == department,
+                    Student.semester == semester,
+                )
+                .order_by(Student.student_code)
+                .limit(
+                    ATTENDANCE_STUDENTS_PER_DEPARTMENT_SEMESTER
+                )
+                .all()
+            )
+
+            for student in cohort:
+                if student.id in seen_student_ids:
+                    continue
+
+                seen_student_ids.add(student.id)
+                students.append(student)
 
     if not students:
         print("Skipped attendance seed (no students found)")

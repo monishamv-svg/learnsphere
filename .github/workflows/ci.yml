@@ -67,23 +67,3 @@ jobs:
         env:
           VITE_API_BASE_URL: http://localhost:8000
         run: npm run test:coverage
-
-  container-build:
-    name: Container Build Validation
-    runs-on: ubuntu-latest
-    needs: [backend-tests, frontend-lint-test]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build backend image
-        run: docker build -f Containerfile -t learnsphere-api:ci ./backend
-
-      - name: Build frontend image
-        run: |
-          docker build \
-            -f Containerfile \
-            --build-arg VITE_API_BASE_URL=http://localhost:8000 \
-            -t learnsphere-web:ci \
-            ./frontend

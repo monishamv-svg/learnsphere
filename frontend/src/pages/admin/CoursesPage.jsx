@@ -338,7 +338,7 @@ function CoursesPage() {
             "Dept",
             "Sem",
             "Credits",
-            "Instructor",
+            "Professor",
             "Enrolled",
             "Actions"
           ]}

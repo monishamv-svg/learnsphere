@@ -38,6 +38,107 @@ class TestStudentsCRUD:
 
         assert response.status_code == 403
 
+    def test_create_duplicate_student_code_rejected(
+        self, client, admin_headers
+    ):
+        client.post(
+            "/students/",
+            json=STUDENT_PAYLOAD,
+            headers=admin_headers,
+        )
+
+        response = client.post(
+            "/students/",
+            json={
+                **STUDENT_PAYLOAD,
+                "email": "other@test.com",
+                "phone_number": "9123456789",
+            },
+            headers=admin_headers,
+        )
+
+        assert response.status_code == 400
+        assert "student code" in response.json()["detail"].lower()
+
+    def test_create_duplicate_email_rejected(
+        self, client, admin_headers
+    ):
+        client.post(
+            "/students/",
+            json=STUDENT_PAYLOAD,
+            headers=admin_headers,
+        )
+
+        response = client.post(
+            "/students/",
+            json={
+                **STUDENT_PAYLOAD,
+                "student_code": "STU003",
+                "phone_number": "9123456789",
+            },
+            headers=admin_headers,
+        )
+
+        assert response.status_code == 400
+        assert "email" in response.json()["detail"].lower()
+
+    def test_create_duplicate_phone_rejected(
+        self, client, admin_headers
+    ):
+        client.post(
+            "/students/",
+            json=STUDENT_PAYLOAD,
+            headers=admin_headers,
+        )
+
+        response = client.post(
+            "/students/",
+            json={
+                **STUDENT_PAYLOAD,
+                "email": "other-phone@test.com",
+                "student_code": "STU004",
+            },
+            headers=admin_headers,
+        )
+
+        assert response.status_code == 400
+        assert "phone" in response.json()["detail"].lower()
+
+    def test_list_students_sorted_by_student_code(
+        self, client, admin_headers
+    ):
+        client.post(
+            "/students/",
+            json={
+                **STUDENT_PAYLOAD,
+                "email": "zeta@test.com",
+                "student_code": "STU010",
+            },
+            headers=admin_headers,
+        )
+        client.post(
+            "/students/",
+            json={
+                **STUDENT_PAYLOAD,
+                "email": "alpha@test.com",
+                "student_code": "STU001",
+                "phone_number": "9111111111",
+            },
+            headers=admin_headers,
+        )
+
+        response = client.get(
+            "/students/",
+            params={"limit": 100},
+        )
+
+        codes = [
+            item["student_code"]
+            for item in response.json()["items"]
+        ]
+
+        assert codes == sorted(codes)
+
     def test_list_students_public(self, client, admin_headers):
         client.post(
             "/students/",

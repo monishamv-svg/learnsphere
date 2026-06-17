@@ -27,6 +27,61 @@ class TestCoursesCRUD:
 
         assert response.status_code == 403
 
+    def test_create_duplicate_course_code_rejected(
+        self, client, admin_headers, sample_course_payload
+    ):
+        client.post(
+            "/courses/",
+            json=sample_course_payload,
+            headers=admin_headers,
+        )
+
+        response = client.post(
+            "/courses/",
+            json={
+                **sample_course_payload,
+                "title": "Duplicate Course",
+            },
+            headers=admin_headers,
+        )
+
+        assert response.status_code == 400
+        assert "course with code" in response.json()["detail"].lower()
+
+    def test_list_courses_sorted_by_course_code(
+        self, client, admin_headers, sample_course_payload
+    ):
+        client.post(
+            "/courses/",
+            json={
+                **sample_course_payload,
+                "course_code": "ZZZ999",
+                "title": "Zulu Course",
+            },
+            headers=admin_headers,
+        )
+        client.post(
+            "/courses/",
+            json={
+                **sample_course_payload,
+                "course_code": "AAA100",
+                "title": "Alpha Course",
+            },
+            headers=admin_headers,
+        )
+
+        response = client.get(
+            "/courses/",
+            params={"limit": 100},
+        )
+
+        codes = [
+            item["course_code"]
+            for item in response.json()["items"]
+        ]
+
+        assert codes == sorted(codes)
+
     def test_list_courses(self, client, admin_headers, sample_course_payload):
         client.post(
             "/courses/",

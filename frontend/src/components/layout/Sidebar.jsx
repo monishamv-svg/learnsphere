@@ -86,7 +86,8 @@ function Sidebar() {
     <aside
       className="
         w-64
-        min-h-screen
+        h-screen
+        shrink-0
         bg-linear-to-b
         from-slate-900
         via-slate-800

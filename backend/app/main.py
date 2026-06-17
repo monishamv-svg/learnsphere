@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
 
 from app.core.config import settings
-from app.db.database import Base, engine
+from app.db.database import engine
 
 import app.models
 
@@ -25,8 +25,6 @@ from app.exceptions.handlers import (
     database_exception_handler,
     generic_exception_handler
 )
-
-##Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.APP_NAME,

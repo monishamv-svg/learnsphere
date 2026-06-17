@@ -8,6 +8,21 @@ from app.schemas.course import CourseCreate, CourseRead, CourseUpdate
 from app.utils.course_instructors import get_course_instructors
 
 
+def _get_course_by_code(
+    db: Session,
+    course_code: str,
+    exclude_course_id: int = None
+):
+    query = db.query(Course).filter(
+        Course.course_code == course_code
+    )
+
+    if exclude_course_id is not None:
+        query = query.filter(Course.id != exclude_course_id)
+
+    return query.first()
+
+
 def _course_to_read(
     db: Session,
     course: Course
@@ -37,13 +52,10 @@ def create_course(
     db: Session,
     course: CourseCreate
 ):
-    existing_course = db.query(Course).filter(
-        Course.course_code == course.course_code
-    ).first()
-
-    if existing_course:
+    if _get_course_by_code(db, course.course_code):
         raise ValueError(
-            "Course code already exists"
+            f"A course with code '{course.course_code}' "
+            "already exists."
         )
 
     db_course = Course(**course.model_dump())
@@ -82,7 +94,12 @@ def get_all_courses(
 
     total_count = query.count()
 
-    courses = query.offset(skip).limit(limit).all()
+    courses = (
+        query.order_by(Course.course_code.asc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
     return {
         "total_count": total_count,
@@ -158,6 +175,18 @@ def replace_course(
     if course_data.max_capacity < enrollment_count:
         raise ValueError(
             "Max capacity cannot be less than current enrollments"
+        )
+
+    duplicate_code = _get_course_by_code(
+        db,
+        course_data.course_code,
+        exclude_course_id=course_id,
+    )
+
+    if duplicate_code:
+        raise ValueError(
+            f"A course with code '{course_data.course_code}' "
+            "already exists."
         )
 
     course.course_code = course_data.course_code

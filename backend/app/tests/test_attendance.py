@@ -156,12 +156,12 @@ class TestAttendanceCRUD:
 
         response = client.patch(
             f"/attendance/{attendance_id}",
-            json={"status": "Late"},
+            json={"status": "Absent"},
             headers=admin_headers,
         )
 
         assert response.status_code == 200
-        assert response.json()["status"] == "Late"
+        assert response.json()["status"] == "Absent"
 
     def test_delete_attendance(
         self,

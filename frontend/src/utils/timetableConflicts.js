@@ -131,27 +131,6 @@ export function findInstructorConflict({
   return null
 }
 
-export function getAvailableInstructors({
-  instructors,
-  entries,
-  dayOfWeek,
-  startTime,
-  endTime,
-  excludeId = null
-}) {
-  return instructors.filter(
-    (name) =>
-      !findInstructorConflict({
-        entries,
-        dayOfWeek,
-        startTime,
-        endTime,
-        instructorName: name,
-        excludeId
-      })
-  )
-}
-
 export function findTimetableConflict({
   entries,
   dayOfWeek,

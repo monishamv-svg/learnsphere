@@ -14,9 +14,63 @@ from app.services.user_service import get_user_by_email
 from app.utils.security import hash_password
 
 
+def _get_student_by_code(
+    db: Session,
+    student_code: str,
+    exclude_student_id: int = None
+):
+    query = db.query(Student).filter(
+        Student.student_code == student_code
+    )
+
+    if exclude_student_id is not None:
+        query = query.filter(Student.id != exclude_student_id)
+
+    return query.first()
+
+
+def _get_student_by_phone(
+    db: Session,
+    phone_number: str,
+    exclude_student_id: int = None
+):
+    query = db.query(Student).filter(
+        Student.phone_number == phone_number
+    )
+
+    if exclude_student_id is not None:
+        query = query.filter(Student.id != exclude_student_id)
+
+    return query.first()
+
+
 def create_student(db: Session, student: StudentCreate):
     if get_user_by_email(db, student.email):
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "A student with this email is already "
+                "registered."
+            ),
+        )
+
+    if _get_student_by_code(db, student.student_code):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"A student with student code "
+                f"'{student.student_code}' already exists."
+            ),
+        )
+
+    if _get_student_by_phone(db, student.phone_number):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "A student with this phone number is "
+                "already registered."
+            ),
+        )
 
     db_user = User(
         full_name=student.full_name,
@@ -77,7 +131,12 @@ def get_all_students(
 
     total_count = query.count()
 
-    students = query.offset(skip).limit(limit).all()
+    students = (
+        query.order_by(Student.student_code.asc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
     return {
         "total_count": total_count,
@@ -112,6 +171,22 @@ def update_student(
     if "full_name" in update_data:
         student.user.full_name = update_data.pop("full_name")
 
+    if "phone_number" in update_data:
+        existing_phone = _get_student_by_phone(
+            db,
+            update_data["phone_number"],
+            exclude_student_id=student_id,
+        )
+
+        if existing_phone:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "A student with this phone number is "
+                    "already registered."
+                ),
+            )
+
     for key, value in update_data.items():
         setattr(student, key, value)
 
@@ -132,6 +207,21 @@ def replace_student(
 
     if not student:
         return None
+
+    existing_phone = _get_student_by_phone(
+        db,
+        student_data.phone_number,
+        exclude_student_id=student_id,
+    )
+
+    if existing_phone:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "A student with this phone number is "
+                "already registered."
+            ),
+        )
 
     student.user.full_name = student_data.full_name
     student.department = student_data.department

@@ -462,7 +462,7 @@ function TimetablePage() {
       <div className="flex flex-wrap gap-3 mb-6">
         <Input
           type="text"
-          placeholder="Search course, room, instructor, day"
+          placeholder="Search course, room, professor, day"
           value={search}
           onChange={(e) => {
             const value = e.target.value
@@ -547,7 +547,7 @@ function TimetablePage() {
             "Day",
             "Time",
             "Room",
-            "Instructor",
+            "Professor",
             "Actions"
           ]}
         >

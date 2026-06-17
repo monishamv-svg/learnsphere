@@ -862,7 +862,7 @@ function EnrollmentsPage() {
                     ? "Loading sections..."
                     : availableCourseSections.length === 0
                       ? "No sections scheduled"
-                      : "Select instructor section"}
+                      : "Select professor section"}
               </option>
 
               {availableCourseSections.map((section) => (
@@ -888,7 +888,7 @@ function EnrollmentsPage() {
 
             {form.course_id && !loadingCourseSections && (
               <p className="mt-1 text-xs text-gray-500">
-                Each instructor teaches this course at a
+                Each professor teaches this course at a
                 different time. Pick the section that fits
                 the student&apos;s schedule.
               </p>

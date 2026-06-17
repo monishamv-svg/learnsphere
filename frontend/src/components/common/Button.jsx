@@ -16,6 +16,7 @@ function Button({
         rounded-lg
         text-white
         font-medium
+        bg-blue-600
         transition
         hover:opacity-90
         disabled:opacity-50

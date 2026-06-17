@@ -7,57 +7,37 @@ import StatCard from "../../components/dashboard/StatCard"
 import Loader from "../../components/common/Loader"
 import AttendanceChart from "../../components/charts/AttendanceChart"
 
-function buildAttendanceChartData(records) {
-  const counts = {
-    Present: 0,
-    Absent: 0,
-    Late: 0
+function buildAttendanceChartData(summary) {
+  if (!summary) {
+    return []
   }
 
-  records.forEach((record) => {
-    if (counts[record.status] !== undefined) {
-      counts[record.status] += 1
-    }
-  })
-
-  return Object.entries(counts)
-    .filter(([, value]) => value > 0)
-    .map(([name, value]) => ({ name, value }))
+  return [
+    { name: "Present", value: summary.present ?? 0 },
+    { name: "Absent", value: summary.absent ?? 0 },
+  ].filter((item) => item.value > 0)
 }
 
 function StudentDashboard() {
   const [dashboard, setDashboard] = useState(null)
-  const [attendanceRecords, setAttendanceRecords] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([
-      api.get("/dashboard/me"),
-      api.get("/attendance", {
-        params: { skip: 0, limit: 100 }
-      })
-    ])
-      .then(([dashboardRes, attendanceRes]) => {
-        setDashboard(dashboardRes.data)
-        setAttendanceRecords(attendanceRes.data ?? [])
+    api.get("/dashboard/me")
+      .then((response) => {
+        setDashboard(response.data)
       })
       .finally(() => {
         setLoading(false)
       })
   }, [])
 
-  const attendanceChartData = useMemo(() => {
-    if (!dashboard) {
-      return []
-    }
-
-    const myRecords = attendanceRecords.filter(
-      (record) =>
-        record.student_id === dashboard.student.id
-    )
-
-    return buildAttendanceChartData(myRecords)
-  }, [attendanceRecords, dashboard])
+  const attendanceChartData = useMemo(
+    () => buildAttendanceChartData(
+      dashboard?.attendance_summary
+    ),
+    [dashboard?.attendance_summary]
+  )
 
   if (loading) {
     return (

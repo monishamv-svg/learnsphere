@@ -128,7 +128,7 @@ def _validate_timetable_section(
 
     if timetable.instructor_name not in allowed_instructors:
         raise ValueError(
-            "Instructor is not assigned to this course"
+            "Professor is not assigned to this course"
         )
 
     section_count = db.query(Timetable).filter(

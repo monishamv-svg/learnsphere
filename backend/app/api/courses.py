@@ -106,11 +106,17 @@ def replace_course_api(
     db: Session = Depends(get_db),
     current_user = Depends(require_admin)
 ):
-    updated_course = replace_course(
-        db,
-        course_id,
-        course_data
-    )
+    try:
+        updated_course = replace_course(
+            db,
+            course_id,
+            course_data
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
 
     if not updated_course:
         raise HTTPException(
@@ -131,11 +137,17 @@ def update_course_api(
     db: Session = Depends(get_db),
     current_user = Depends(require_admin)
 ):
-    updated_course = update_course(
-        db,
-        course_id,
-        course_data
-    )
+    try:
+        updated_course = update_course(
+            db,
+            course_id,
+            course_data
+        )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
 
     if not updated_course:
         raise HTTPException(

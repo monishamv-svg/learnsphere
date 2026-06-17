@@ -441,7 +441,7 @@ function TimetableModal({
             </FormField>
 
             <FormField
-              label="Instructor Name"
+              label="Professor Name"
               htmlFor="timetable-instructor"
               error={instructorAvailabilityError}
             >
@@ -460,7 +460,7 @@ function TimetableModal({
                 >
                   <option value="">
                     {selectedCourse
-                      ? "Select Instructor"
+                      ? "Select Professor"
                       : "Select a course first"}
                   </option>
                   {courseInstructors.map((name) => {

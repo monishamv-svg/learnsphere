@@ -368,10 +368,10 @@ function CourseModal({
           </Select>
         </FormField>
 
-        <FormField label="Instructor Name" htmlFor="course-instructor">
+        <FormField label="Professor Name" htmlFor="course-instructor">
           <Input
             id="course-instructor"
-            placeholder="Enter primary instructor name"
+            placeholder="Enter primary professor name"
             value={form.instructor_name}
             onChange={(e) =>
               setForm({
@@ -383,7 +383,7 @@ function CourseModal({
         </FormField>
 
         <FormField
-          label="Additional Instructors"
+          label="Additional Professors"
           htmlFor="course-additional-instructors"
         >
           <Input

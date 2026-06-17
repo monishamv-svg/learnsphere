@@ -7,7 +7,10 @@ import {
   Legend
 } from "recharts"
 
-const COLORS = ["#22c55e", "#ef4444", "#f59e0b"]
+const STATUS_COLORS = {
+  Present: "#22c55e",
+  Absent: "#ef4444",
+}
 
 function AttendanceChart({
   data = [],
@@ -44,10 +47,12 @@ function AttendanceChart({
               outerRadius="70%"
               label
             >
-              {data.map((entry, index) => (
+              {data.map((entry) => (
                 <Cell
                   key={entry.name}
-                  fill={COLORS[index % COLORS.length]}
+                  fill={
+                    STATUS_COLORS[entry.name] || "#94a3b8"
+                  }
                 />
               ))}
             </Pie>

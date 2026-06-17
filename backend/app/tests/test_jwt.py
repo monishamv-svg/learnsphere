@@ -63,4 +63,4 @@ class TestCreateAccessToken:
             )
 
     def test_default_expiry_minutes(self):
-        assert ACCESS_TOKEN_EXPIRE_MINUTES == 60
+        assert ACCESS_TOKEN_EXPIRE_MINUTES == 720

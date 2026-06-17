@@ -36,10 +36,6 @@ def parse_date_value(value) -> date:
     raise ValueError("Invalid date format")
 
 
-def format_date(value: date) -> str:
-    return value.isoformat()
-
-
 def format_time(value) -> str:
     if isinstance(value, time):
         return value.strftime("%H:%M")

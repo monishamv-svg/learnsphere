@@ -14,6 +14,15 @@ class TestAdminDashboard:
         assert "enrollments" in data
         assert "attendance_records" in data
         assert "timetable_entries" in data
+        assert "classes_by_weekday" in data
+        assert "course_breakdown" in data
+        assert "students_by_department" in data
+        assert "students_by_semester" in data
+        assert "students_by_department_semester" in data
+        assert isinstance(data["classes_by_weekday"], list)
+        assert isinstance(data["students_by_department"], list)
+        assert isinstance(data["students_by_semester"], list)
+        assert isinstance(data["students_by_department_semester"], list)
 
     def test_admin_stats_forbidden_for_student(
         self, client, student_headers
@@ -31,6 +40,9 @@ class TestStudentDashboard:
         data = response.json()
         assert "student" in data
         assert data["student"]["id"] == student_profile.id
+        assert "attendance_summary" in data
+        assert "present" in data["attendance_summary"]
+        assert "absent" in data["attendance_summary"]
 
     def test_student_dashboard_forbidden_for_admin(
         self, client, admin_headers

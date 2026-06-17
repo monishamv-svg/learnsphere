@@ -307,7 +307,7 @@ function SemesterScheduleView({
                       <th className="py-2 pr-4">Day</th>
                       <th className="py-2 pr-4">Time</th>
                       <th className="py-2 pr-4">Room</th>
-                      <th className="py-2 pr-4">Instructor</th>
+                      <th className="py-2 pr-4">Professor</th>
                       <th className="py-2">Actions</th>
                     </tr>
                   </thead>

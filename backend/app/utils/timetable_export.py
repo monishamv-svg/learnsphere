@@ -96,7 +96,7 @@ def build_student_timetable_ics(timetable: dict) -> str:
             f"{entry['course_title']}"
         )
         description = (
-            f"Instructor: {entry['instructor_name']}"
+            f"Professor: {entry['instructor_name']}"
         )
         location = f"Room {entry['room_number']}"
         byday = DAY_TO_ICS[entry["day_of_week"]]
@@ -183,7 +183,7 @@ def build_student_timetable_pdf(timetable: dict) -> bytes:
         "End",
         "Course",
         "Room",
-        "Instructor"
+        "Professor"
     ]
 
     pdf.set_font("Helvetica", "B", 10)
